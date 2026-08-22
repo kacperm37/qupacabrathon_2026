@@ -1,0 +1,20 @@
+# Credentials. Never tracked. The event key lives on the organizer machine only.
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.uv-cache/
+.ipynb_checkpoints/
+__marimo__/
+
+# Simulator practice output. The submission script writes here, and the folder
+# an organizer files is the one their hardware run produced, never one a team
+# committed from its own machine.
+results/
+
+# macOS
+.DS_Store

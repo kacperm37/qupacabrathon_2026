@@ -1,0 +1,83 @@
+# Runs the submission gate on every pull request that adds or changes a script
+# in submissions/.
+#
+# THIS WORKFLOW NEEDS NO SECRET, AND ADDING ONE WOULD BE A MISTAKE.
+#
+# It executes code written by a team that forked this repository. Stage 2 of the
+# checker runs that code against a local PennyLane simulator with the hardware
+# routing stripped out of the environment, so nothing here reaches the event key,
+# a QPU, or any network beyond installing the pinned packages.
+#
+# The trigger is `pull_request`, which runs fork code with no repository token and
+# no stored credential. The sibling trigger that runs in the base repository's
+# context instead, with credentials available, must never be used here: it would
+# hand a stranger's Python the token of the repository that gates hardware.
+#
+# Both of those rules are checked mechanically, by grepping this file for a
+# credential reference and for that sibling trigger's name. Neither string appears
+# anywhere below, which is why this comment describes them rather than spelling
+# them out.
+#
+# The event key lives in an untracked .env on the organizer machine and is read
+# at execution time by the organizer who checks the branch out and runs it. It
+# never enters CI.
+#
+# A red check here is a complete answer to a team. The failure output names what
+# to change, so nobody has to be available for a team to make progress.
+
+name: submission check
+
+on:
+  pull_request:
+    paths:
+      - "submissions/*.py"
+
+# Read-only, and no token reaches the checker. Stating it here keeps a later edit
+# from quietly widening the default.
+permissions:
+  contents: read
+
+# A team pushing a fix supersedes its own earlier run rather than queueing behind
+# it. Twelve teams share one runner pool on Saturday afternoon.
+concurrency:
+  group: submission-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # One step, because a submitted filename is untrusted input. Reading it
+      # here and never through a `${{ }}` expression is what keeps a file named
+      # for a shell command from becoming one.
+      - name: Run the gate
+        run: |
+          set -u
+          found=0
+          status=0
+          while IFS= read -r script; do
+            found=1
+            echo "::group::$script"
+            if uv run --python 3.12 scripts/submission_check.py "$script"; then
+              echo "::notice file=$script::ready to submit"
+            else
+              status=1
+              echo "::error file=$script::the submission gate failed, see the log above"
+            fi
+            echo "::endgroup::"
+          done < <(find submissions -maxdepth 1 -name '*.py' -print | sort)
+          if [ "$found" -eq 0 ]; then
+            echo "::error::submissions/ holds no .py file."
+            echo "Copy challenge/submission-template.py to submissions/<your-team>_run1.py,"
+            echo "fill in build_circuits, and commit it."
+            exit 1
+          fi
+          exit $status
