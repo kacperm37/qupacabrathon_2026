@@ -164,7 +164,7 @@ DELTA = 0.029
 # this file and a device can be swapped for its fallback without touching a
 # single submission. `check_environment` below stops a "qbraid" run whose
 # environment carries no route or no credential before the first shot.
-DEVICE = "default.mixed"
+DEVICE = "default.qubit"
 
 # Everything above is read once, before your code runs, and the run is executed
 # from that snapshot. Reassigning any of it later changes nothing except that the
@@ -219,20 +219,19 @@ def build_circuits(n: int, theta: float) -> list[Callable[[], None]]:
         alice_angle = alpha(x)
         bob_angle = beta(y)
         
-        # We define a unique QNode for each question using a closure to freeze the angles
-        @qml.qnode(DEVICE)
+        # A closure freezes the angles for this question. This is a bare gate
+        # function rather than a QNode: `main` attaches qml.sample(wires=[0, 1])
+        # and owns the measurement, which is what guarantees every circuit the
+        # same SHOTS honest trials.
         def make_circuit(a_angle=alice_angle, b_angle=bob_angle):
             # Step A: Prepare the entangled Bell state |beta_00>
             qml.Hadamard(wires=0)
-            qml.CNOT(wires=[10])
-            
+            qml.CNOT(wires=[0, 1])
+
             # Step B: Rotate Alice's and Bob's qubits
             qml.RY(a_angle, wires=0)
             qml.RY(b_angle, wires=1)
-            
-            # Step C: Measure both qubits in the computational basis
-            return qml.sample()
-            
+
         circuits.append(make_circuit)
         
     return circuits
