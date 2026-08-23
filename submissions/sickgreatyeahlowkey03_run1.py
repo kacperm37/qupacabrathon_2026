@@ -190,6 +190,18 @@ def build_circuits(n: int, theta: float) -> list[Callable[[], None]]:
         list: A list of 2n QNodes, ordered as:
               - n vertex circuits: (0,0), (1,1), ..., (n-1, n-1)
               - n edge circuits:   (0,1), (1,2), ..., (n-1, 0)
+
+    Constructs the list of 2n optimal quantum circuits for the C_n game,
+    incorporating a calibration offset parameter `theta`.
+    
+    Parameters:
+        n (int): The odd cycle graph size (n >= 3).
+        theta (float): Calibration offset to subtract from Bob's angles.
+        
+    Returns:
+        list: A list of 2n bare gate functions (Callable[[], None]), ordered as:
+              - n vertex circuits: (0,0), (1,1), ..., (n-1, n-1)
+              - n edge circuits:   (0,1), (1,2), ..., (n-1, 0)
     """
     # 1. Calculate our global step size and Bob's vertex offset
     s = numpy.pi * (n - 1) / n

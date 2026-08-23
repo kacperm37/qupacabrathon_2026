@@ -179,64 +179,55 @@ DEVICE = "default.qubit"
 
 def build_circuits(n: int, theta: float) -> list[Callable[[], None]]:
 
-    """
-    Constructs the list of 2n optimal quantum circuits for the C_n game.
-    
-    Parameters:
-        n (int): The odd cycle graph size (n >= 3).
-        dev (qml.Device): The PennyLane device (simulator or physical QPU).
-        
-    Returns:
-        list: A list of 2n QNodes, ordered as:
-              - n vertex circuits: (0,0), (1,1), ..., (n-1, n-1)
-              - n edge circuits:   (0,1), (1,2), ..., (n-1, 0)
-    """
-    # 1. Calculate our global step size and Bob's vertex offset
-    s = numpy.pi * (n - 1) / n
-    delta_v = numpy.pi / (2 * n)
-    
-    # 2. Define Alice's and Bob's angle calculators
-    def alpha(x):
-        return -x * s
-        
-    def beta(y):
-        return -y * s - delta_v
+    """Build one sweep of the odd-cycle game: the instrument your experiment runs on.
 
-    # 3. Define the list of 2n questions we must build circuits for
-    # Vertex questions: (0,0), (1,1), ..., (n-1, n-1)
-    vertex_questions = [(i, i) for i in range(n)]
-    
-    # Edge questions: (0,1), (1,2), ..., (n-1, 0)
-    edge_questions = [(i, (i + 1) % n) for i in range(n)]
-    
-    questions = vertex_questions + edge_questions
-    
-    # 4. Generate the QNode list
-    circuits = []
-    
-    for x, y in questions:
-        # Retrieve the specific rotation angles for this question
-        alice_angle = alpha(x)
-        bob_angle = beta(y)
-        
-        # We define a unique QNode for each question using a closure to freeze the angles
-        @qml.qnode(theta)
-        def make_circuit(a_angle=alice_angle, b_angle=bob_angle):
-            # Step A: Prepare the entangled Bell state |beta_00>
+    This is the function your team fills in. The circuit itself is settled
+    physics, derived to the last step in the Background Notes, and filling it
+    in correctly is the floor rather than the contest. What stays yours is the
+    experiment built around it: the angle functions are the one place a
+    coherent device bias can be countered from your own run 1 profile, and the
+    parameter block above prices every other decision.
+
+    Returns a list of exactly `2 * n` functions, one per question, in the order
+    `question_order(n)` returns:
+
+        (0, 0), (1, 1), ..., (n - 1, n - 1),
+        (0, 1), (1, 2), ..., (n - 1, 0)
+
+    Entry `k` of your list is the circuit for question `k` of that list. The
+    order is not checked against anything, so getting it wrong scores your
+    answers against the wrong questions and reports a loss with no error raised.
+
+    Each entry takes no arguments and applies gates to two wires: wire 0 is the
+    first player and wire 1 is the second. It returns nothing. `main` attaches
+    `qml.sample(wires=[0, 1])` and owns the measurement, which is how every
+    circuit is guaranteed the same `SHOTS` honest trials.
+
+    So a single circuit is a function of this shape:
+
+        def circuit():
             qml.Hadamard(wires=0)
-            qml.CNOT(wires=[10])
-            
-            # Step B: Rotate Alice's and Bob's qubits
-            qml.RY(a_angle, wires=0)
-            qml.RY(b_angle, wires=1)
-            
-            # Step C: Measure both qubits in the computational basis
-            return qml.sample()
-            
-        circuits.append(make_circuit)
-        
-    return circuits
-    
+            ...
+
+    `theta` is the angle whose cosine squared is the quantum bound. It is the
+    only quantity in the circuit that depends on `n`. What your strategy does
+    with it is your decision, and you are free to ignore it.
+
+    One shape is fixed, because it is what the classical bound is a statement
+    about. The gates up to and including the last two-qubit gate are the shared
+    state the players agreed on before any question arrived, so they are
+    identical in all 2n circuits. Everything after them is single-qubit: wire 0's
+    gates may depend only on `x` and wire 1's only on `y`. Players who can read
+    each other's questions beat every bound in the Challenge Instructions
+    without any physics, so `scripts/submission_check.py` rebuilds these
+    circuits and compares the two that share each player's question, gate for
+    gate, before anything runs.
+
+    A worked derivation of what these circuits have to do, and why one Bell pair
+    and one rotation per player is enough, is in the Background Notes at
+    https://qupacabrathon.dev.
+    """
+
     raise NotImplementedError(
         "build_circuits is a stub: this is the part your team writes. "
         "Return 2 * n gate functions in the order question_order(n) gives. "
