@@ -99,7 +99,7 @@ N = 5  # small to calibrate for noise
 # count that certifies with 90% probability at the deficit you declared below.
 # Buying the bare minimum instead puts the expected outcome exactly at the gate
 # and fails about half the time.
-SHOTS = 250
+SHOTS = 1172
 
 # Pauli-twirled circuit variants per question. 1 submits your circuit exactly
 # as you wrote it. At k > 1, each question is submitted as k variants, each
@@ -133,7 +133,7 @@ TWIRLS = 1
 # You name the device, never the route that reaches it. The organizer's
 # environment maps this label to a route at execution time, which is what lets
 # a device be swapped for its fallback without touching a submission.
-QPU = "emerald"
+QPU = "garnet"
 
 # The device deficit you are sizing this run against: how far below the ideal
 # quantum win rate you expect the hardware to land, omega = omega_q - delta.
@@ -153,7 +153,7 @@ QPU = "emerald"
 # passes here and the hardware certifies nothing; declaring one worse means you
 # over-buy shots and pay for it on the design award. Both are priced, and both
 # are your call.
-DELTA = 0.029
+DELTA = 0.018421
 
 # The one line that differs between a practice run and a hardware run, and it
 # is not yours to set: leave it as it ships. An organizer swaps this single

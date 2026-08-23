@@ -180,17 +180,6 @@ DEVICE = "default.qubit"
 def build_circuits(n: int, theta: float) -> list[Callable[[], None]]:
 
     """
-    Constructs the list of 2n optimal quantum circuits for the C_n game.
-    
-    Parameters:
-        n (int): The odd cycle graph size (n >= 3).
-        dev (qml.Device): The PennyLane device (simulator or physical QPU).
-        
-    Returns:
-        list: A list of 2n QNodes, ordered as:
-              - n vertex circuits: (0,0), (1,1), ..., (n-1, n-1)
-              - n edge circuits:   (0,1), (1,2), ..., (n-1, 0)
-
     Constructs the list of 2n optimal quantum circuits for the C_n game,
     incorporating a calibration offset parameter `theta`.
     
